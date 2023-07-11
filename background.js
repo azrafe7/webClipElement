@@ -12,11 +12,7 @@ chrome.action.onClicked.addListener(async (tab) => {
     {
       event: "enablePicker",
       data: null,
-    }/* ,
-    function(response) {
-      console.log("[WebClipElement:BG] response:");
-      console.log(response);
-    } */
+    }
   );
 });
 
@@ -39,6 +35,7 @@ chrome.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
     let [activeTab] = await chrome.tabs.query({active: true, lastFocusedWindow: true});
     chrome.tabs.sendMessage(activeTab.id, {event: "takenScreenshot", data:{dataURL: dataURL, hoverInfo: data.hoverInfo}});
   } else if (event === "openCroppedInNewTab") {
+    console.log("[WebClipElement:BG] opening cropped image in new tab...");
     let dataURL = data;
     let [activeTab] = await chrome.tabs.query({active: true, lastFocusedWindow: true});
     chrome.tabs.create({url: dataURL, index: activeTab.index + 1});

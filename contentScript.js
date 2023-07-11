@@ -1,15 +1,15 @@
 "use strict";
 
-(() => {
+(async () => {
   let manifest = chrome.runtime.getManifest();
   console.log(manifest.name + " v" + manifest.version);
 
-  const HIGHLIGHT_LIGHT = "rgba(250, 70, 60, 0.5)";
-  const HIGHLIGHT_DARK = "rgba(60, 250, 70, 0.25)";
+  const HIGHLIGHT_DARK = "rgba(250, 70, 60, 0.5)";
+  const HIGHLIGHT_LIGHT = "rgba(60, 250, 70, 0.25)";
   const HIGHLIGHT_BG_COLOR = HIGHLIGHT_LIGHT;
 
-  const OUTLINE_LIGHT = "rgba(250, 70, 60, 0.75)";
-  const OUTLINE_DARK = "rgba(60, 250, 70, 0.5)";
+  const OUTLINE_DARK = "rgba(250, 70, 60, 0.75)";
+  const OUTLINE_LIGHT = "rgba(60, 250, 70, 0.5)";
   const OUTLINE_COLOR = OUTLINE_LIGHT;
 
   if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -91,7 +91,7 @@
           // target.remove();
           elementPicker.hoverInfo.element = null;
           const hoverInfoClone = structuredClone(elementPicker.hoverInfo);
-          destroyPicker();
+          window.requestAnimationFrame(destroyPicker);
 
           chrome.runtime.sendMessage(
             {
@@ -106,7 +106,7 @@
       let hoverInfo = data.hoverInfo;
       let image = new Image();
       image.onload = () => {
-        console.log("image LOADED");
+        console.log("[WebClipElement:CTX] cropping...");
         let canvas = document.createElement('canvas');
         let ctx = canvas.getContext('2d');
         canvas.width = hoverInfo.width;
@@ -114,9 +114,9 @@
         ctx.drawImage(image, hoverInfo.targetOffsetLeft, hoverInfo.targetOffsetTop, canvas.width, canvas.height,
                              0, 0, canvas.width, canvas.height);
         let croppedDataURL = canvas.toDataURL();
-        console.log(croppedDataURL);
         canvas = null;
         ctx = null;
+        console.log("[WebClipElement:CTX] send cropped dataURL", croppedDataURL);
         chrome.runtime.sendMessage(
           {
             event: "openCroppedInNewTab",
@@ -140,3 +140,7 @@
 
 })();
 
+async function sleep(ms) {
+  console.log(`[WebClipElement:CTX] sleeping ${ms}ms...`);
+  return new Promise(r => setTimeout(r, ms));
+}
