@@ -29,6 +29,39 @@
     action: {}
   }
 
-  let elementPicker = new ElementPicker(options);
+  let elementPicker = null;
+
+
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    console.log("[WebClipElement:CTX]", msg);
+    const { event, data } = msg;
+
+    if (event === "enablePicker") {
+      elementPicker = new ElementPicker(options);
+      elementPicker.action = {
+        trigger: "mouseup",
+        callback: ((target) => {
+          console.log("[WebClipElement:CTX] target:", target);
+          console.log("[WebClipElement:CTX] info:", elementPicker.hoverInfo);
+          // sendResponse(elementPicker.hoverInfo);
+          elementPicker.close();
+          elementPicker = null;
+        })
+      }
+    }
+
+    // return true; // keep port alive
+  });
+
+  // close picker when pressing ESC
+  window.addEventListener('keyup', function(e) {
+    if (e.keyCode == 27) {
+      if (elementPicker) {
+        elementPicker.close();
+        elementPicker = null;
+        console.log("[WebClipElement:CTX] user aborted");
+      }
+    }
+  });
 
 })();
