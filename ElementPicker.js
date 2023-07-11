@@ -4,11 +4,17 @@
             // MUST create hover box first before applying options
             this.hoverBox = document.createElement("div");
             this.hoverBox.style.position = "absolute";
-            this.hoverBox.style.pointerEvents = "none";
-            // document.documentElement.style.cursor = "crosshair";
+            // this.hoverBox.style.pointerEvents = "none";
+            this.hoverBox.style.cursor = "crosshair";
             this.hoverBox.style.setProperty("z-index", 2147483647, "important");
 
             this.hoverBoxInfo = document.createElement("div");
+            this.hoverInfo = {
+              element: null,
+              tagName: "",
+              width: 0,
+              height: 0,
+            }
             this.hoverBoxInfo.innerText = "IMG 300 × 400";
             this.hoverBoxInfo.style = 
               `background-color: rgba(0,0,0,.5);
@@ -61,7 +67,7 @@
                         // console.log("screenX: " + e.screenX);
                         // console.log("screenY: " + e.screenY);
                         // console.log("TCL: hoveredElement", hoveredElement);
-                        if (this._previousTarget === hoveredElement) {
+                        if (!this._triggered && this._previousTarget === hoveredElement) {
                             // avoid repeated calculation and rendering
                             return;
                         } else {
@@ -78,6 +84,12 @@
                     this.hoverBox.style.height = targetHeight + this.borderWidth * 2 + "px";
                     
                     this.hoverBox.style.outline = this.outlineWidth + "px solid " + this.outlineColor;
+                    this.hoverInfo = {
+                      element: target,
+                      tagName: target.tagName.toUpperCase(),
+                      width: targetWidth,
+                      height: targetHeight,
+                    }
                     this.hoverBoxInfo.innerText = `<${target.tagName.toUpperCase()}> ${targetWidth} × ${targetHeight}`;
                     
                     // need scrollX and scrollY to account for scrolling
@@ -93,6 +105,9 @@
                 }
             };
             document.addEventListener("mousemove", this._detectMouseMove);
+        }
+        get info() {
+          return this.hoverInfo;
         }
         get container() {
             return this._container;
@@ -180,8 +195,12 @@
             }
         }
         close() {
-            this.hoverBox.remove()
-            this.hoverBoxInfo.remove()
+            if (this._triggerListener) {
+              document.removeEventListener(this.action.trigger, this._triggerListener);
+            }
+            document.removeEventListener("mousemove", this._detectMouseMove);
+            this.hoverBox.remove();
+            this.hoverBoxInfo.remove();
         }        
         _redetectMouseMove() {
             if (this._detectMouseMove && this._previousEvent) {
