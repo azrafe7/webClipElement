@@ -67,14 +67,14 @@
       }
     }
   };
-  
+
   function destroyPicker() {
     if (elementPicker) {
       elementPicker.close();
       elementPicker = null;
     }
   }
-  
+
   chrome.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
     console.log("[WebClipElement:CTX]", msg);
     const { event, data } = msg;
@@ -92,7 +92,7 @@
           elementPicker.hoverInfo.element = null;
           const hoverInfoClone = structuredClone(elementPicker.hoverInfo);
           destroyPicker();
-          
+
           chrome.runtime.sendMessage(
             {
               event: "takeScreenshot",
@@ -111,7 +111,7 @@
         let ctx = canvas.getContext('2d');
         canvas.width = hoverInfo.width;
         canvas.height = hoverInfo.height;
-        ctx.drawImage(image, hoverInfo.targetOffsetLeft, hoverInfo.targetOffsetTop, canvas.width, canvas.height, 
+        ctx.drawImage(image, hoverInfo.targetOffsetLeft, hoverInfo.targetOffsetTop, canvas.width, canvas.height,
                              0, 0, canvas.width, canvas.height);
         let croppedDataURL = canvas.toDataURL();
         console.log(croppedDataURL);
