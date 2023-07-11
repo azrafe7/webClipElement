@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Copy highlighted elements as image",
   "manifest_version": 3,
-  "permissions": ["tabs", "activeTab", "contextMenus", "scripting"],
+  "permissions": ["tabs", "activeTab", "scripting"],
   "background": {
     "service_worker": "background.js"
   },

@@ -84,17 +84,25 @@
                     this.hoverBox.style.height = targetHeight + this.borderWidth * 2 + "px";
                     
                     this.hoverBox.style.outline = this.outlineWidth + "px solid " + this.outlineColor;
+                    
+                    // need scrollX and scrollY to account for scrolling
+                    this.hoverBox.style.top = targetOffset.top + window.scrollY - this.borderWidth + "px";
+                    this.hoverBox.style.left = targetOffset.left + window.scrollX - this.borderWidth + "px";
+
                     this.hoverInfo = {
                       element: target,
                       tagName: target.tagName.toUpperCase(),
                       width: targetWidth,
                       height: targetHeight,
+                      targetOffsetTop: targetOffset.top,
+                      targetOffsetLeft: targetOffset.left,
+                      scrollX: window.scrollX,
+                      scrollY: window.scrollY,
+                      top: targetOffset.top + window.scrollY,
+                      left: targetOffset.left + window.scrollX,
                     }
                     this.hoverBoxInfo.innerText = `<${target.tagName.toUpperCase()}> ${targetWidth} × ${targetHeight}`;
-                    
-                    // need scrollX and scrollY to account for scrolling
-                    this.hoverBox.style.top = targetOffset.top + window.scrollY - this.borderWidth + "px";
-                    this.hoverBox.style.left = targetOffset.left + window.scrollX - this.borderWidth + "px";
+
                     if (this._triggered && this.action.callback) {
                         this.action.callback(target);
                         this._triggered = false;

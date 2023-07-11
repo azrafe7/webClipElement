@@ -5,20 +5,21 @@
   console.log(manifest.name + " v" + manifest.version);
 
   const HIGHLIGHT_LIGHT = "rgba(250, 70, 60, 0.5)";
-  const HIGHLIGHT_DARK = "rgba(60, 70, 250, 0.5)";
+  const HIGHLIGHT_DARK = "rgba(60, 250, 70, 0.25)";
   const HIGHLIGHT_BG_COLOR = HIGHLIGHT_LIGHT;
 
   const OUTLINE_LIGHT = "rgba(250, 70, 60, 0.75)";
-  const OUTLINE_DARK = "rgba(60, 70, 250, 0.75)";
+  const OUTLINE_DARK = "rgba(60, 250, 70, 0.5)";
   const OUTLINE_COLOR = OUTLINE_LIGHT;
 
   if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     // dark mode
     HIGHLIGHT_BG_COLOR = HIGHLIGHT_DARK;
+    OUTLINE_COLOR = OUTLINE_DARK;
   }
 
   let options = {
-    container: document.body,
+    // container: document.body,
     selectors: "*",
     background: HIGHLIGHT_BG_COLOR,
     borderWidth: 0,
@@ -67,38 +68,75 @@
     }
   };
   
-  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  function destroyPicker() {
+    if (elementPicker) {
+      elementPicker.close();
+      elementPicker = null;
+    }
+  }
+  
+  chrome.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
     console.log("[WebClipElement:CTX]", msg);
     const { event, data } = msg;
 
     if (event === "enablePicker") {
+      destroyPicker();
       elementPicker = new ElementPicker(options);
       elementPicker.action = {
         trigger: "mouseup",
         callback: ((target) => {
           console.log("[WebClipElement:CTX] target:", target);
           console.log("[WebClipElement:CTX] info:", elementPicker.hoverInfo);
-          // sendResponse(elementPicker.hoverInfo);
-          unlockScreenIfLocked(target);
-          target.remove();
-          elementPicker.close();
-          elementPicker = null;
+          // unlockScreenIfLocked(target);
+          // target.remove();
+          elementPicker.hoverInfo.element = null;
+          const hoverInfoClone = structuredClone(elementPicker.hoverInfo);
+          destroyPicker();
+          
+          chrome.runtime.sendMessage(
+            {
+              event: "takeScreenshot",
+              data: {hoverInfo: hoverInfoClone},
+            },
+          );
         })
       }
+    } else if (event === "takenScreenshot") {
+      let dataURL = data.dataURL;
+      let hoverInfo = data.hoverInfo;
+      let image = new Image();
+      image.onload = () => {
+        console.log("image LOADED");
+        let canvas = document.createElement('canvas');
+        let ctx = canvas.getContext('2d');
+        canvas.width = hoverInfo.width;
+        canvas.height = hoverInfo.height;
+        ctx.drawImage(image, hoverInfo.targetOffsetLeft, hoverInfo.targetOffsetTop, canvas.width, canvas.height, 
+                             0, 0, canvas.width, canvas.height);
+        let croppedDataURL = canvas.toDataURL();
+        console.log(croppedDataURL);
+        canvas = null;
+        ctx = null;
+        chrome.runtime.sendMessage(
+          {
+            event: "openCroppedInNewTab",
+            data: croppedDataURL,
+          },
+        );
+      };
+      image.src = dataURL;
     }
-
-    // return true; // keep port alive
   });
 
   // close picker when pressing ESC
   window.addEventListener('keyup', function(e) {
     if (e.keyCode == 27) {
       if (elementPicker) {
-        elementPicker.close();
-        elementPicker = null;
+        destroyPicker();
         console.log("[WebClipElement:CTX] user aborted");
       }
     }
   });
 
 })();
+
