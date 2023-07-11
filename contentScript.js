@@ -31,7 +31,42 @@
 
   let elementPicker = null;
 
+  // from https://github.com/gorhill/uBlock/blob/master/src/js/scriptlets/epicker.js
+  // zapElementAtPoint() function
+  function unlockScreenIfLocked(elemToRemove) {
+    const getStyleValue = (elem, prop) => {
+      const style = window.getComputedStyle(elem);
+      return style ? style[prop] : '';
+    };
 
+    // Heuristic to detect scroll-locking: remove such lock when detected.
+    let maybeScrollLocked = elemToRemove.shadowRoot instanceof DocumentFragment;
+    if (maybeScrollLocked === false) {
+      let elem = elemToRemove;
+      do {
+        maybeScrollLocked =
+          parseInt(getStyleValue(elem, 'zIndex'), 10) >= 1000 ||
+          getStyleValue(elem, 'position') === 'fixed';
+        elem = elem.parentElement;
+      } while (elem !== null && maybeScrollLocked === false);
+    }
+    if (maybeScrollLocked) {
+      const doc = document;
+      if (getStyleValue(doc.body, 'overflowY') === 'hidden') {
+        doc.body.style.setProperty('overflow', 'auto', 'important');
+      }
+      if (getStyleValue(doc.body, 'position') === 'fixed') {
+        doc.body.style.setProperty('position', 'initial', 'important');
+      }
+      if (getStyleValue(doc.documentElement, 'position') === 'fixed') {
+        doc.documentElement.style.setProperty('position', 'initial', 'important');
+      }
+      if (getStyleValue(doc.documentElement, 'overflowY') === 'hidden') {
+        doc.documentElement.style.setProperty('overflow', 'auto', 'important');
+      }
+    }
+  };
+  
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     console.log("[WebClipElement:CTX]", msg);
     const { event, data } = msg;
@@ -44,6 +79,8 @@
           console.log("[WebClipElement:CTX] target:", target);
           console.log("[WebClipElement:CTX] info:", elementPicker.hoverInfo);
           // sendResponse(elementPicker.hoverInfo);
+          unlockScreenIfLocked(target);
+          target.remove();
           elementPicker.close();
           elementPicker = null;
         })
