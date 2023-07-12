@@ -4,19 +4,19 @@
   let manifest = chrome.runtime.getManifest();
   console.log(manifest.name + " v" + manifest.version);
 
-  const HIGHLIGHT_DARK = "rgba(250, 70, 60, 0.5)";
-  const HIGHLIGHT_LIGHT = "rgba(17, 193, 12, 0.5)";
-  const HIGHLIGHT_BG_COLOR = HIGHLIGHT_LIGHT;
+  const HIGHLIGHT_RED = "rgba(250, 70, 60, 0.5)";
+  const HIGHLIGHT_GREEN = "rgba(17, 193, 12, 0.5)";
+  const HIGHLIGHT_BG_COLOR = HIGHLIGHT_GREEN;
 
-  const OUTLINE_DARK = "rgba(250, 70, 60, 0.75)";
-  const OUTLINE_LIGHT = "rgba(17, 193, 12, 0.90)";
-  const OUTLINE_COLOR = OUTLINE_LIGHT;
+  const OUTLINE_RED = "rgba(250, 70, 60, 0.75)";
+  const OUTLINE_GREEN = "rgba(17, 193, 12, 0.90)";
+  const OUTLINE_COLOR = OUTLINE_GREEN;
 
-  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+  /* if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     // dark mode
     HIGHLIGHT_BG_COLOR = HIGHLIGHT_DARK;
     OUTLINE_COLOR = OUTLINE_DARK;
-  }
+  } */
 
   let options = {
     // container: document.body,
@@ -114,7 +114,7 @@
           destroyPicker();
           console.log(elementPicker);
           console.assert(elementPicker == null, "elementPicker was not null as expected");
-          requestAnimationFrame(() => {
+          requestAnimationFrame(() => { // to ensure picker overlay is removed
             chrome.runtime.sendMessage(
               {
                 event: "takeScreenshot",
