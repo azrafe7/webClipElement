@@ -112,13 +112,16 @@
           elementPicker.hoverInfo.element = null;
           const hoverInfoClone = structuredClone(elementPicker.hoverInfo);
           destroyPicker();
-          // console.log(elementPicker);
-          chrome.runtime.sendMessage(
-            {
-              event: "takeScreenshot",
-              data: {hoverInfo: hoverInfoClone},
-            },
-          );
+          console.log(elementPicker);
+          console.assert(elementPicker == null, "elementPicker was not null as expected");
+          requestAnimationFrame(() => {
+            chrome.runtime.sendMessage(
+              {
+                event: "takeScreenshot",
+                data: {hoverInfo: hoverInfoClone},
+              },
+            );
+          });
         })
       }
     } else if (event === "takenScreenshot") {
