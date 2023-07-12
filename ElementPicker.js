@@ -89,6 +89,9 @@
                     this.hoverBox.style.top = targetOffset.top + window.scrollY - this.borderWidth + "px";
                     this.hoverBox.style.left = targetOffset.left + window.scrollX - this.borderWidth + "px";
 
+                    const infoText = `<${target.tagName.toUpperCase()}> ${targetWidth} × ${targetHeight}`;
+                    this.hoverBoxInfo.innerText = infoText;
+
                     this.hoverInfo = {
                       element: target,
                       tagName: target.tagName.toUpperCase(),
@@ -100,8 +103,9 @@
                       scrollY: window.scrollY,
                       top: targetOffset.top + window.scrollY,
                       left: targetOffset.left + window.scrollX,
+                      clientRect: targetOffset,
+                      text: infoText,
                     }
-                    this.hoverBoxInfo.innerText = `<${target.tagName.toUpperCase()}> ${targetWidth} × ${targetHeight}`;
 
                     if (this._triggered && this.action.callback) {
                         this.action.callback(target);

@@ -5,11 +5,11 @@
   console.log(manifest.name + " v" + manifest.version);
 
   const HIGHLIGHT_DARK = "rgba(250, 70, 60, 0.5)";
-  const HIGHLIGHT_LIGHT = "rgba(60, 250, 70, 0.25)";
+  const HIGHLIGHT_LIGHT = "rgba(17, 193, 12, 0.5)";
   const HIGHLIGHT_BG_COLOR = HIGHLIGHT_LIGHT;
 
   const OUTLINE_DARK = "rgba(250, 70, 60, 0.75)";
-  const OUTLINE_LIGHT = "rgba(60, 250, 70, 0.5)";
+  const OUTLINE_LIGHT = "rgba(17, 193, 12, 0.90)";
   const OUTLINE_COLOR = OUTLINE_LIGHT;
 
   if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -75,7 +75,27 @@
     }
   }
 
-  chrome.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
+  function getVisibleRect(rect) {
+    let visibleRect = DOMRect.fromRect(rect);
+
+    if (visibleRect.x < 0) {
+      visibleRect.width += visibleRect.x;
+      visibleRect.x = 0;
+    }
+    if (visibleRect.y < 0) {
+      visibleRect.height += visibleRect.y;
+      visibleRect.y = 0;
+    }
+    if (visibleRect.x + visibleRect.width > window.innerWidth) {
+      visibleRect.width = window.innerWidth - visibleRect.x;
+    }
+    if (visibleRect.y + visibleRect.height > window.innerHeight) {
+      visibleRect.height = window.innerHeight - visibleRect.y;
+    }
+    return visibleRect;
+  }
+
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     console.log("[WebClipElement:CTX]", msg);
     const { event, data } = msg;
 
@@ -91,8 +111,8 @@
           // target.remove();
           elementPicker.hoverInfo.element = null;
           const hoverInfoClone = structuredClone(elementPicker.hoverInfo);
-          window.requestAnimationFrame(destroyPicker);
-
+          destroyPicker();
+          // console.log(elementPicker);
           chrome.runtime.sendMessage(
             {
               event: "takeScreenshot",
@@ -106,23 +126,28 @@
       let hoverInfo = data.hoverInfo;
       let image = new Image();
       image.onload = () => {
-        console.log("[WebClipElement:CTX] cropping...");
+        let visibleRect = getVisibleRect(hoverInfo.clientRect);
+        console.log("[WebClipElement:CTX] cropping...", visibleRect);
         let canvas = document.createElement('canvas');
         let ctx = canvas.getContext('2d');
-        canvas.width = hoverInfo.width;
-        canvas.height = hoverInfo.height;
-        ctx.drawImage(image, hoverInfo.targetOffsetLeft, hoverInfo.targetOffsetTop, canvas.width, canvas.height,
-                             0, 0, canvas.width, canvas.height);
-        let croppedDataURL = canvas.toDataURL();
-        canvas = null;
-        ctx = null;
-        console.log("[WebClipElement:CTX] send cropped dataURL", croppedDataURL);
-        chrome.runtime.sendMessage(
-          {
-            event: "openCroppedInNewTab",
-            data: croppedDataURL,
-          },
-        );
+
+        canvas.width = visibleRect.width;
+        canvas.height = visibleRect.height;
+        
+        ctx.drawImage(image, visibleRect.x, visibleRect.y, visibleRect.width, visibleRect.height,
+                             0, 0, visibleRect.width, visibleRect.height);
+        
+        ((croppedDataURL) => {
+          canvas = null;
+          ctx = null;
+          console.log("[WebClipElement:CTX] send cropped dataURL", croppedDataURL);
+          chrome.runtime.sendMessage(
+            {
+              event: "openCroppedInNewTab",
+              data: croppedDataURL,
+            },
+          );
+        })(canvas.toDataURL());
       };
       image.src = dataURL;
     }
@@ -139,8 +164,3 @@
   });
 
 })();
-
-async function sleep(ms) {
-  console.log(`[WebClipElement:CTX] sleeping ${ms}ms...`);
-  return new Promise(r => setTimeout(r, ms));
-}
