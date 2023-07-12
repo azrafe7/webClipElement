@@ -1,7 +1,7 @@
 {
   "name": "WebClipElement",
-  "version": "0.0.1",
-  "description": "Copy highlighted elements as image",
+  "version": "0.1.0",
+  "description": "Take screenshot of highligthed element",
   "manifest_version": 3,
   "permissions": ["tabs", "activeTab", "scripting"],
   "background": {
