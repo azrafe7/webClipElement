@@ -131,6 +131,13 @@
         let canvas = document.createElement('canvas');
         let ctx = canvas.getContext('2d');
 
+        const zoomLevel = window.devicePixelRatio;
+        if (zoomLevel != 1.0) {
+          visibleRect.x *= zoomLevel;
+          visibleRect.y *= zoomLevel;
+          visibleRect.width *= zoomLevel;
+          visibleRect.height *= zoomLevel;
+        }
         canvas.width = visibleRect.width;
         canvas.height = visibleRect.height;
         
