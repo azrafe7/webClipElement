@@ -36,6 +36,7 @@
     
             const defaultOptions = {
                 container: document.body,
+                enabled: true,
                 selectors: "*", // default to pick all elements
                 background: "rgba(153, 235, 255, 0.5)", // transparent light blue
                 borderWidth: 5,
@@ -54,6 +55,7 @@
             });
 
             this._detectMouseMove = (e) => {
+                if (!this.enabled) return;
                 this._previousEvent = e;
                 let target = e.target;
                 // console.log("TCL: ElementPicker -> this._moveHoverBox -> target", target)
@@ -119,7 +121,14 @@
             document.addEventListener("mousemove", this._detectMouseMove);
         }
         get info() {
-          return this.hoverInfo;
+            return this.hoverInfo;
+        }
+        get enabled() {
+            return this._enabled;
+        }
+        set enabled(value) {
+            this._enabled = value;
+            this.hoverBox.style.visibility = this._enabled ? "visible" : "hidden";
         }
         get container() {
             return this._container;

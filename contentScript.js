@@ -20,6 +20,7 @@
 
   let options = {
     // container: document.body,
+    enabled: false,
     selectors: "*",
     background: HIGHLIGHT_BG_COLOR,
     borderWidth: 0,
@@ -30,7 +31,29 @@
     action: {}
   }
 
-  let elementPicker = null;
+  // create "disabled" elementPicker on page load
+  let elementPicker = new ElementPicker(options);
+  elementPicker.action = {
+    trigger: "mouseup",
+    callback: ((target) => {
+      console.log("[WebClipElement:CTX] target:", target);
+      console.log("[WebClipElement:CTX] info:", elementPicker.hoverInfo);
+      // unlockScreenIfLocked(target);
+      // target.remove();
+      elementPicker.hoverInfo.element = null; // not serializable
+      const hoverInfoClone = structuredClone(elementPicker.hoverInfo);
+      elementPicker.enabled = false;
+      console.log(elementPicker);
+      requestAnimationFrame(() => { // to ensure picker overlay is removed
+        chrome.runtime.sendMessage(
+          {
+            event: "takeScreenshot",
+            data: {hoverInfo: hoverInfoClone},
+          },
+        );
+      });
+    })
+  }
 
   // from https://github.com/gorhill/uBlock/blob/master/src/js/scriptlets/epicker.js
   // zapElementAtPoint() function
@@ -100,30 +123,7 @@
     const { event, data } = msg;
 
     if (event === "enablePicker") {
-      destroyPicker();
-      elementPicker = new ElementPicker(options);
-      elementPicker.action = {
-        trigger: "mouseup",
-        callback: ((target) => {
-          console.log("[WebClipElement:CTX] target:", target);
-          console.log("[WebClipElement:CTX] info:", elementPicker.hoverInfo);
-          // unlockScreenIfLocked(target);
-          // target.remove();
-          elementPicker.hoverInfo.element = null;
-          const hoverInfoClone = structuredClone(elementPicker.hoverInfo);
-          destroyPicker();
-          console.log(elementPicker);
-          console.assert(elementPicker == null, "elementPicker was not null as expected");
-          requestAnimationFrame(() => { // to ensure picker overlay is removed
-            chrome.runtime.sendMessage(
-              {
-                event: "takeScreenshot",
-                data: {hoverInfo: hoverInfoClone},
-              },
-            );
-          });
-        })
-      }
+      elementPicker.enabled = true;
     } else if (event === "takenScreenshot") {
       let dataURL = data.dataURL;
       let hoverInfo = data.hoverInfo;
@@ -166,10 +166,8 @@
   // close picker when pressing ESC
   window.addEventListener('keyup', function(e) {
     if (e.keyCode == 27) {
-      if (elementPicker) {
-        destroyPicker();
-        console.log("[WebClipElement:CTX] user aborted");
-      }
+      elementPicker.enabled = false;
+      console.log("[WebClipElement:CTX] user aborted");
     }
   });
 
