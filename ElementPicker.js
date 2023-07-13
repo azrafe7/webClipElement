@@ -29,6 +29,7 @@
               margin-left: 0;
               overflow: hidden;
               padding: 4px;
+              padding-bottom: 2px;
               position: fixed;
               right: 0;
               white-space: nowrap;
@@ -129,6 +130,7 @@
         set enabled(value) {
             this._enabled = value;
             this.hoverBox.style.visibility = this._enabled ? "visible" : "hidden";
+            this.hoverBoxInfo.style.visibility = this._enabled ? "visible" : "hidden";
         }
         get container() {
             return this._container;
