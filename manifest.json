@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Take screenshot of highligthed element",
   "manifest_version": 3,
-  "permissions": ["tabs", "activeTab", "scripting"],
+  "permissions": ["activeTab"],
   "background": {
     "service_worker": "background.js"
   },
@@ -16,9 +16,6 @@
   "cross_origin_opener_policy": {
     "value": "same-origin"
   },
-  "host_permissions": [
-    "<all_urls>"
-  ],
   "icons": {
     "16": "assets/icon16.png",
     "32": "assets/icon32.png",
