@@ -43,15 +43,14 @@
       elementPicker.hoverInfo.element = null; // not serializable
       const hoverInfoClone = structuredClone(elementPicker.hoverInfo);
       elementPicker.enabled = false;
-      console.log(elementPicker);
-      requestAnimationFrame(() => { // to ensure picker overlay is removed
+      setTimeout(() => { // to ensure picker overlay is removed
         chrome.runtime.sendMessage(
           {
             event: "takeScreenshot",
             data: {hoverInfo: hoverInfoClone},
           },
         );
-      });
+      }, 0);
     })
   }
 
