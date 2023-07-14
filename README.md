@@ -1,6 +1,7 @@
 # webClipElement
 Take screenshot of highligthed element.
 
+![alt text](./webstore_assets/screenshot_01.png "Screenshot")
 
 # Overview
 Take screenshot of highligthed element.
