@@ -131,6 +131,7 @@
             this._enabled = value;
             this.hoverBox.style.visibility = this._enabled ? "visible" : "hidden";
             this.hoverBoxInfo.style.visibility = this._enabled ? "visible" : "hidden";
+            this._triggered = false;
         }
         get container() {
             return this._container;
