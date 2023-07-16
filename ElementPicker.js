@@ -7,15 +7,20 @@
             // this.hoverBox.style.pointerEvents = "none";
             this.hoverBox.style.cursor = "crosshair";
             this.hoverBox.style.setProperty("z-index", 2147483647, "important");
+          
+            this._actionEvent = null;
 
             this.hoverBoxInfo = document.createElement("div");
+            this.hoverBoxInfo.id = 'EP_hoverBoxInfo';
             this.hoverInfo = {
               element: null,
               tagName: "",
               width: 0,
               height: 0,
             }
-            this.hoverBoxInfo.innerText = "IMG 300 × 400";
+            this.hoverBoxInfo.innerText = "";
+            // document.styleSheets[0].insertRule('#EP_hoverBoxInfo:empty { display: none;}', 0); // hide when empty
+            // ↑ done in CSS
             this.hoverBoxInfo.style = 
               `background-color: rgba(0,0,0,.5);
               border-radius: 0 0 0 0;
@@ -111,15 +116,18 @@
                     }
 
                     if (this._triggered && this.action.callback) {
-                        this.action.callback(target);
+                        // console.log("TRIGGERED");
+                        this.action.callback(this._actionEvent, target);
                         this._triggered = false;
+                        this._actionEvent = null;
                     }
                 } else {
                     // console.log("hiding hover box...");
                     this.hoverBox.style.width = 0;
                 }
             };
-            document.addEventListener("mousemove", this._detectMouseMove);
+            
+            // document.addEventListener("mousemove", this._detectMouseMove);
         }
         get info() {
             return this.hoverInfo;
@@ -132,6 +140,20 @@
             this.hoverBox.style.visibility = this._enabled ? "visible" : "hidden";
             this.hoverBoxInfo.style.visibility = this._enabled ? "visible" : "hidden";
             this._triggered = false;
+            if (!this._enabled) {
+              this.hoverBox.style.width = 0;
+              this.hoverBox.style.height = 0;
+              this.hoverBoxInfo.innerText = '';
+              if (this._triggerListener) {
+                document.removeEventListener(this.action.trigger, this._triggerListener);
+              }
+              document.removeEventListener("mousemove", this._detectMouseMove);
+            } else {
+              if (this.action?.trigger && this._triggerListener) {
+                document.addEventListener(this.action.trigger, this._triggerListener);
+              }
+              document.addEventListener("mousemove", this._detectMouseMove);
+            }
         }
         get container() {
             return this._container;
@@ -203,12 +225,17 @@
                     if (this._triggerListener) {
                         document.removeEventListener(this.action.trigger, this._triggerListener);
                         this._triggered = false;
+                        this._actionEvent = null;
                     }
                     this._action = value;
 
-                    this._triggerListener = () => {
+                    this._triggerListener = (evt) => {
+                        this._actionEvent = evt;
                         this._triggered = true;
                         this._redetectMouseMove();
+                        if (this.action?.callback) {
+                          this._redetectMouseMove(); // call it again as the action may have altered the page
+                        }
                     }
                     document.addEventListener(this.action.trigger, this._triggerListener);
                 } else if (value.trigger !== undefined || value.callback !== undefined){ // allow empty action object
