@@ -50,7 +50,7 @@
             data: {hoverInfo: hoverInfoClone},
           },
         );
-      }, 0);
+      }, 50);
     })
   }
 
