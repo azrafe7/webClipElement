@@ -1,6 +1,8 @@
  # CHANGELOG
 
- ### v0.1.1 (14 Aug 2023)
+ ### v0.1.1 (17 Aug 2023)
+ - update picker
+ - add/remove event listeners on enable/disable
  - more reliably hide overlay before taking screenshot
 
  ### v0.1.0 (13 Aug 2023)
