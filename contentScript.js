@@ -28,7 +28,8 @@
     outlineColor: OUTLINE_COLOR,
     transition: "",
     ignoreElements: [document.body],
-    action: {}
+    action: {},
+    hoverBoxInfoId: 'webclip_picker_info',
   }
 
   // create "disabled" elementPicker on page load
@@ -164,7 +165,7 @@
 
   // close picker when pressing ESC
   window.addEventListener('keyup', function(e) {
-    if (e.keyCode == 27) {
+    if (e.keyCode == 27 && elementPicker.enabled) {
       elementPicker.enabled = false;
       console.log("[WebClipElement:CTX] user aborted");
     }

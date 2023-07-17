@@ -11,7 +11,6 @@
             this._actionEvent = null;
 
             this.hoverBoxInfo = document.createElement("div");
-            this.hoverBoxInfo.id = 'EP_hoverBoxInfo';
             this.hoverInfo = {
               element: null,
               tagName: "",
@@ -51,6 +50,7 @@
                 transition: "all 150ms ease", // set to "" (empty string) to disable
                 ignoreElements: [document.body],
                 action: {},
+                hoverBoxInfoId: 'EP_hoverBoxInfo',
             }
             const mergedOptions = {
                 ...defaultOptions,
@@ -131,6 +131,12 @@
         }
         get info() {
             return this.hoverInfo;
+        }
+        get hoverBoxInfoId() {
+            return this.hoverBoxInfo.id;
+        }
+        set hoverBoxInfoId(value) {
+            this.hoverBoxInfo.id = value;
         }
         get enabled() {
             return this._enabled;
