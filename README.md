@@ -3,6 +3,8 @@ Take a screenshot of highligthed element.
 
 ![screenshot](./webstore_assets/screenshot_01.png "Screenshot")
 
+You can find it here: https://chrome.google.com/webstore/detail/webclipelement/ndkjiolmefobbpbiejfnihoccngfbpjh
+
 # Overview
 Click on the extension icon, select an element on the page and click on it.
 
