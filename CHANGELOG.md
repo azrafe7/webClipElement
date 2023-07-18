@@ -2,6 +2,7 @@
 
  ### v0.1.2 (18 Aug 2023)
  - hold SHIFT to continue clipping
+ - set hoverBoxInfo id
 
  ### v0.1.1 (17 Aug 2023)
  - trigger action on click instead of mouseup

@@ -5,7 +5,9 @@ Take a screenshot of highligthed element.
 
 # Overview
 Click on the extension icon, select an element on the page and click on it.
+
 Voilà... A screenshot of that element will open in a new tab.
+Hold SHIFT to clip multiple elements on the page, or press ESC to quit clipping mode.
 
 And all happens inside your browser, nothing is sent online. ;D
 

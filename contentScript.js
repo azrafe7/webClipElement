@@ -37,12 +37,9 @@
   elementPicker.action = {
     trigger: "mouseup",
     
-    // IMPORTANT!
     callback: ((event, target) => {
       console.log("[WebClipElement:CTX] target:", target);
       console.log("[WebClipElement:CTX] info:", elementPicker.hoverInfo);
-      // unlockScreenIfLocked(target);
-      // target.remove();
       elementPicker.hoverInfo.element = null; // not serializable
       const hoverInfoClone = structuredClone(elementPicker.hoverInfo);
       setTimeout(() => { // to ensure picker overlay is removed
