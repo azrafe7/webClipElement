@@ -36,22 +36,25 @@
   let elementPicker = new ElementPicker(options);
   elementPicker.action = {
     trigger: "mouseup",
-    callback: ((target) => {
+    
+    // IMPORTANT!
+    callback: ((event, target) => {
       console.log("[WebClipElement:CTX] target:", target);
       console.log("[WebClipElement:CTX] info:", elementPicker.hoverInfo);
       // unlockScreenIfLocked(target);
       // target.remove();
       elementPicker.hoverInfo.element = null; // not serializable
       const hoverInfoClone = structuredClone(elementPicker.hoverInfo);
-      elementPicker.enabled = false;
       setTimeout(() => { // to ensure picker overlay is removed
         chrome.runtime.sendMessage(
           {
             event: "takeScreenshot",
-            data: {hoverInfo: hoverInfoClone},
+            data: {hoverInfo: hoverInfoClone, continuePicking: event.shiftKey},
           },
         );
       }, 50);
+      
+      elementPicker.enabled = false;
     })
   }
 
@@ -127,6 +130,12 @@
     } else if (event === "takenScreenshot") {
       let dataURL = data.dataURL;
       let hoverInfo = data.hoverInfo;
+      let continuePicking = data?.continuePicking;
+      
+      if (continuePicking) {
+        elementPicker.enabled = true;
+      }
+      
       let image = new Image();
       image.onload = () => {
         let visibleRect = getVisibleRect(hoverInfo.clientRect);
@@ -154,7 +163,10 @@
           chrome.runtime.sendMessage(
             {
               event: "openCroppedInNewTab",
-              data: croppedDataURL,
+              data: {
+                dataURL: croppedDataURL,
+                continuePicking: continuePicking,
+              },
             },
           );
         })(canvas.toDataURL());

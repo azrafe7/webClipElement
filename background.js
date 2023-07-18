@@ -33,11 +33,12 @@ chrome.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
     let dataURL = await takeScreenshot();
     console.log("[WebClipElement:BG]", dataURL);
     let [activeTab] = await chrome.tabs.query({active: true, lastFocusedWindow: true});
-    chrome.tabs.sendMessage(activeTab.id, {event: "takenScreenshot", data:{dataURL: dataURL, hoverInfo: data.hoverInfo}});
+    chrome.tabs.sendMessage(activeTab.id, {event: "takenScreenshot", data:{dataURL: dataURL, hoverInfo: data.hoverInfo, continuePicking: data?.continuePicking}});
   } else if (event === "openCroppedInNewTab") {
     console.log("[WebClipElement:BG] opening cropped image in new tab...");
-    let dataURL = data;
+    let dataURL = data.dataURL;
+    let focusNewTab = !(data?.continuePicking);
     let [activeTab] = await chrome.tabs.query({active: true, lastFocusedWindow: true});
-    chrome.tabs.create({url: dataURL, index: activeTab.index + 1});
+    chrome.tabs.create({url: dataURL, index: activeTab.index + 1, active: focusNewTab});
   }
 });

@@ -1,6 +1,10 @@
  # CHANGELOG
 
+ ### v0.1.2 (18 Aug 2023)
+ - hold SHIFT to continue clipping
+
  ### v0.1.1 (17 Aug 2023)
+ - trigger action on click instead of mouseup
  - update picker
  - add/remove event listeners on enable/disable
  - more reliably hide overlay before taking screenshot
