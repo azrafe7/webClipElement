@@ -1,5 +1,8 @@
  # CHANGELOG
 
+ ### v0.1.3 (21 Sep 2023)
+ - add 'take page screenshot...' to action button context menu
+
  ### v0.1.2 (18 Aug 2023)
  - hold SHIFT to continue clipping
  - set hoverBoxInfo id

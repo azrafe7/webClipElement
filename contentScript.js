@@ -80,7 +80,7 @@
     const { event, data } = msg;
 
     if (event === "enablePicker") {
-      elementPicker.enabled = true;
+      elementPicker.enabled = data?.enable ?? true;
     } else if (event === "takenScreenshot") {
       let dataURL = data.dataURL;
       let hoverInfo = data.hoverInfo;
