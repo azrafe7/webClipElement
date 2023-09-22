@@ -1,4 +1,4 @@
-# webClipElement
+# WebClip Element
 Take a screenshot of highligthed element.
 
 ![screenshot](./webstore_assets/screenshot_01.png "Screenshot")
