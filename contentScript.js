@@ -2,7 +2,7 @@
 
 (async () => {
   
-  const DEBUG = false;
+  const DEBUG = true;
   let debug = {
     log: DEBUG ? console.log.bind(console) : () => {} // log or NO_OP
   }
@@ -44,23 +44,25 @@
   let elementPicker = new ElementPicker(options);
   elementPicker.hoverBox.style.cursor = CURSORS[0];
   elementPicker.action = {
-    trigger: "mouseup",
+    trigger: "click",
     
     callback: ((event, target) => {
+      // debug.log("[WebClipElement:CTX] event:", event);
       debug.log("[WebClipElement:CTX] target:", target);
       debug.log("[WebClipElement:CTX] info:", elementPicker.hoverInfo);
       elementPicker.hoverInfo.element = null; // not serializable
       const hoverInfoClone = structuredClone(elementPicker.hoverInfo);
+      let continuePicking = event.shiftKey;
       setTimeout(() => { // to ensure picker overlay is removed
         chrome.runtime.sendMessage(
           {
             event: "takeScreenshot",
-            data: {hoverInfo: hoverInfoClone, continuePicking: event.shiftKey},
+            data: {hoverInfo: hoverInfoClone, continuePicking: continuePicking},
           },
         );
       }, 50);
       
-      elementPicker.enabled = false;
+      elementPicker.enabled = continuePicking;
     })
   }
 
