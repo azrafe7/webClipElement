@@ -64,7 +64,7 @@
         }, 50);
       }
       
-      elementPicker.enabled = continuePicking && event.button == 0;
+      elementPicker.enabled = false; // always disable picker highlight (so that it's not saved in the screenshot)
     })
   }
 
