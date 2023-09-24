@@ -1,7 +1,7 @@
 {
   "name": "WebClip Element",
-  "version": "0.1.4",
-  "description": "Take a screenshot of highligthed element",
+  "version": "0.1.5",
+  "description": "Take a screenshot of highligthed element (or visible page)",
   "manifest_version": 3,
   "permissions": ["activeTab", "contextMenus"],
   "background": {
