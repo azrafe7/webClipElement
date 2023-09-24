@@ -42,27 +42,29 @@
 
   // create "disabled" elementPicker on page load
   let elementPicker = new ElementPicker(options);
-  elementPicker.hoverBox.style.cursor = CURSORS[0];
+  // elementPicker.hoverBox.style.cursor = CURSORS[0];
   elementPicker.action = {
-    trigger: "click",
+    trigger: "mouseup",
     
     callback: ((event, target) => {
       // debug.log("[WebClipElement:CTX] event:", event);
-      debug.log("[WebClipElement:CTX] target:", target);
-      debug.log("[WebClipElement:CTX] info:", elementPicker.hoverInfo);
-      elementPicker.hoverInfo.element = null; // not serializable
-      const hoverInfoClone = structuredClone(elementPicker.hoverInfo);
       let continuePicking = event.shiftKey;
-      setTimeout(() => { // to ensure picker overlay is removed
-        chrome.runtime.sendMessage(
-          {
-            event: "takeScreenshot",
-            data: {hoverInfo: hoverInfoClone, continuePicking: continuePicking},
-          },
-        );
-      }, 50);
+      if (event.button == 0) { // only proceed if left mouse button was pressed
+        debug.log("[WebClipElement:CTX] target:", target);
+        debug.log("[WebClipElement:CTX] info:", elementPicker.hoverInfo);
+        elementPicker.hoverInfo.element = null; // not serializable
+        const hoverInfoClone = structuredClone(elementPicker.hoverInfo);
+        setTimeout(() => { // to ensure picker overlay is removed
+          chrome.runtime.sendMessage(
+            {
+              event: "takeScreenshot",
+              data: {hoverInfo: hoverInfoClone, continuePicking: continuePicking},
+            },
+          );
+        }, 50);
+      }
       
-      elementPicker.enabled = continuePicking;
+      elementPicker.enabled = continuePicking && event.button == 0;
     })
   }
 
@@ -92,6 +94,7 @@
 
     if (event === "enablePicker") {
       elementPicker.enabled = data?.enable ?? true;
+      elementPicker.hoverBox.style.cursor = CURSORS[0];
     } else if (event === "takenScreenshot") {
       let dataURL = data.dataURL;
       let hoverInfo = data.hoverInfo;
