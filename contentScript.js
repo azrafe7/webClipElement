@@ -1,6 +1,12 @@
 "use strict";
 
 (async () => {
+  
+  const DEBUG = false;
+  let debug = {
+    log: DEBUG ? console.log.bind(console) : () => {} // log or NO_OP
+  }
+
   let manifest = chrome.runtime.getManifest();
   console.log(manifest.name + " v" + manifest.version);
 
@@ -11,6 +17,8 @@
   const OUTLINE_RED = "rgba(250, 70, 60, 0.75)";
   const OUTLINE_GREEN = "rgba(17, 193, 12, 0.90)";
   const OUTLINE_COLOR = OUTLINE_GREEN;
+
+  const CURSORS = ["crosshair", "copy"];
 
   /* if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     // dark mode
@@ -34,12 +42,13 @@
 
   // create "disabled" elementPicker on page load
   let elementPicker = new ElementPicker(options);
+  elementPicker.hoverBox.style.cursor = CURSORS[0];
   elementPicker.action = {
     trigger: "mouseup",
     
     callback: ((event, target) => {
-      console.log("[WebClipElement:CTX] target:", target);
-      console.log("[WebClipElement:CTX] info:", elementPicker.hoverInfo);
+      debug.log("[WebClipElement:CTX] target:", target);
+      debug.log("[WebClipElement:CTX] info:", elementPicker.hoverInfo);
       elementPicker.hoverInfo.element = null; // not serializable
       const hoverInfoClone = structuredClone(elementPicker.hoverInfo);
       setTimeout(() => { // to ensure picker overlay is removed
@@ -76,7 +85,7 @@
   }
 
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-    console.log("[WebClipElement:CTX]", msg);
+    debug.log("[WebClipElement:CTX]", msg);
     const { event, data } = msg;
 
     if (event === "enablePicker") {
@@ -93,7 +102,7 @@
       let image = new Image();
       image.onload = () => {
         let visibleRect = getVisibleRect(hoverInfo.clientRect);
-        console.log("[WebClipElement:CTX] cropping...", visibleRect);
+        debug.log("[WebClipElement:CTX] cropping...", visibleRect);
         let canvas = document.createElement('canvas');
         let ctx = canvas.getContext('2d');
 
@@ -113,7 +122,7 @@
         ((croppedDataURL) => {
           canvas = null;
           ctx = null;
-          console.log("[WebClipElement:CTX] send cropped dataURL", croppedDataURL);
+          debug.log("[WebClipElement:CTX] send cropped dataURL", croppedDataURL);
           chrome.runtime.sendMessage(
             {
               event: "openCroppedInNewTab",
@@ -133,8 +142,22 @@
   window.addEventListener('keyup', function(e) {
     if (e.keyCode == 27 && elementPicker.enabled) {
       elementPicker.enabled = false;
-      console.log("[WebClipElement:CTX] user aborted");
+      debug.log("[WebClipElement:CTX] user aborted");
     }
   });
+
+  // change picker cursor when holding SHIFT
+  function updateCursor(eventInfo) {
+    let {keyUp, event} = eventInfo;
+    if (elementPicker.enabled) {
+      let cursorIdx = +event.shiftKey;
+      if (elementPicker.hoverBox.style.cursor != CURSORS[cursorIdx]) {
+        // debug.log('[WebClipElement:CTX] change cursor to ' + CURSORS[cursorIdx]);
+        elementPicker.hoverBox.style.cursor = CURSORS[cursorIdx];
+      }
+    }
+  }
+  window.addEventListener('keyup', (e) => updateCursor({keyUp: true, event: e}));
+  window.addEventListener('keydown', (e) => updateCursor({keyUp: false, event: e}));
 
 })();
