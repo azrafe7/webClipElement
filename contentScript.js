@@ -2,7 +2,7 @@
 
 (async () => {
   
-  const DEBUG = true;
+  const DEBUG = false;
   let debug = {
     log: DEBUG ? console.log.bind(console) : () => {} // log or NO_OP
   }
