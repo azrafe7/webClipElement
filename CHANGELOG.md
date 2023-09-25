@@ -1,9 +1,11 @@
  # CHANGELOG
 
+ ### v0.1.6 (25 Sep 2023)
+ - disable picker on right click
+
  ### v0.1.5 (24 Sep 2023)
  - less noise in console (only log if DEBUG == true)
  - change picker cursor when holding SHIFT
- - disable on right click
  - trigger on "mouseup"
 
  ### v0.1.3 (21 Sep 2023)
