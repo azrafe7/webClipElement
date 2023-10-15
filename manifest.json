@@ -1,6 +1,6 @@
 {
   "name": "WebClip Element",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "description": "Take a screenshot of highligthed element (or visible page)",
   "manifest_version": 3,
   "permissions": ["activeTab", "contextMenus"],
@@ -11,7 +11,8 @@
     {
       "matches": ["<all_urls>"],
       "js": ["ElementPicker.js", "contentScript.js"],
-      "css": ["ElementPicker.css"]
+      "css": ["ElementPicker.css"],
+      "all_frames": false
     }
   ],
   "cross_origin_opener_policy": {

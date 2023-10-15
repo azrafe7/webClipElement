@@ -1,5 +1,13 @@
  # CHANGELOG
 
+ ### v0.2.0 (15 Oct 2023)
+ - update picker to latest
+ - inject in top frame only
+ - use an iframe overlay when enabled
+ - works on sites with multiple frames
+ - better close detection
+ - better highlight and info
+
  ### v0.1.6 (25 Sep 2023)
  - disable picker on right click
 

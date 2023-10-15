@@ -1,4 +1,12 @@
 (function () {
+    function ellipsize(text, length) {
+      if (text.length > length) {
+        return `${text.substring(0, length)}...${text.substring(text.length - length)}`; 
+      } else {
+        return text;
+      }
+    }
+
     class ElementPicker {
         constructor(options) {
             // MUST create hover box first before applying options
@@ -37,10 +45,11 @@
               position: fixed;
               right: 0;
               white-space: nowrap;
-              z-index: 2147483647 !important`;
+              z-index: 2147483647 !important;
+              pointer-events: none;`;
     
             const defaultOptions = {
-                container: document.body,
+                container: null, // if falsey an iframe will be used
                 enabled: true,
                 selectors: "*", // default to pick all elements
                 background: "rgba(153, 235, 255, 0.5)", // transparent light blue
@@ -56,29 +65,73 @@
                 ...defaultOptions,
                 ...options
             };
+
+            if (!mergedOptions.container) {
+              let zapperIFrame = document.createElement('iframe');
+              zapperIFrame.id = 'zapper_iframe';
+              document.documentElement.append(zapperIFrame);
+
+              const zapperIFrameCSS = `
+                backgroundColor: transparent;
+                left: 0px;
+                top: 0px;
+                position: fixed;
+                width: 100% !important;
+                height: 100% !important;
+                overflow: hidden;
+                z-index: 2147483647 !important;
+                margin: 0px;
+                color-scheme: none;
+              `;
+              
+              zapperIFrame.style = zapperIFrameCSS;
+              zapperIFrame.contentDocument.body.style = zapperIFrameCSS;
+              this.iframe = zapperIFrame;
+              mergedOptions.container = zapperIFrame.contentDocument.body;
+              mergedOptions.ignoreElements.push(zapperIFrame);
+            }
+
             Object.keys(mergedOptions).forEach((key) => {
                 this[key] = mergedOptions[key];
             });
 
+            this._onScroll = (e) => {
+              let fakeTarget = document.elementsFromPoint(this._lastClientX, this._lastClientY)[1];
+              let fakeEvent = {
+                clientX: this._lastClientX,
+                clientY: this._lastClientY,
+                target: fakeTarget,
+              }
+              this._detectMouseMove(fakeEvent);
+            }
+            
             this._detectMouseMove = (e) => {
+                this._lastClientX = e.clientX;
+                this._lastClientY = e.clientY;
                 if (!this.enabled) return;
                 this._previousEvent = e;
                 let target = e.target;
                 // console.log("TCL: ElementPicker -> this._moveHoverBox -> target", target)
-                if (this.ignoreElements.indexOf(target) === -1 && target.matches(this.selectors) &&
-                    this.container.contains(target) ||
-                    target === this.hoverBox) { // is NOT ignored elements
+                if (this.ignoreElements.indexOf(target) === -1 && target.matches(this.selectors)) { // is NOT in ignored elements
                     // console.log("TCL: target", target);
-                    if (target === this.hoverBox) {
+                    if (target === this.hoverBox || target === this.container) {
                         // the truely hovered element behind the added hover box
-                        const hoveredElement = document.elementsFromPoint(e.clientX, e.clientY)[1];
+                        const hoveredElements = document.elementsFromPoint(e.clientX, e.clientY);
+                        let hoveredElement = hoveredElements[0];
+                        for (hoveredElement of hoveredElements) {
+                          if ((this.iframe && this.iframe.contains(hoveredElement)) || this.container.contains(hoveredElement)) {
+                            continue;
+                          } else {
+                            break;
+                          }
+                        }
                         // console.log("screenX: " + e.screenX);
                         // console.log("screenY: " + e.screenY);
                         // console.log("TCL: hoveredElement", hoveredElement);
-                        if (!this._triggered && this._previousTarget === hoveredElement) {
+                        /*if (!this._triggered && this._previousTarget === hoveredElement) {
                             // avoid repeated calculation and rendering
                             return;
-                        } else {
+                        } else*/ {
                             target = hoveredElement;
                         }
                     } else {
@@ -94,10 +147,13 @@
                     this.hoverBox.style.outline = this.outlineWidth + "px solid " + this.outlineColor;
                     
                     // need scrollX and scrollY to account for scrolling
-                    this.hoverBox.style.top = targetOffset.top + window.scrollY - this.borderWidth + "px";
-                    this.hoverBox.style.left = targetOffset.left + window.scrollX - this.borderWidth + "px";
+                    this.hoverBox.style.top = targetOffset.top + (this.iframe ? 0 : window.scrollY) - this.borderWidth + "px";
+                    this.hoverBox.style.left = targetOffset.left + (this.iframe ? 0 : window.scrollX) - this.borderWidth + "px";
 
-                    const infoText = `<${target.tagName.toUpperCase()}> ${targetWidth} × ${targetHeight}`;
+                    // const infoText = `${targetText} ${targetWidth} × ${targetHeight}`;
+                    const attrs = Array.from(target.attributes, ({name, value}) => (name + '=' + value));
+                    const ellipsizedAttrsText = attrs.length > 0 ? ' ' + ellipsize(attrs.join(' '), 20) : '';
+                    const infoText = `<${target.tagName.toUpperCase()}${ellipsizedAttrsText}> ${targetWidth} × ${targetHeight}`;
                     this.hoverBoxInfo.innerText = infoText;
 
                     this.hoverInfo = {
@@ -127,7 +183,6 @@
                 }
             };
             
-            // document.addEventListener("mousemove", this._detectMouseMove);
         }
         get info() {
             return this.hoverInfo;
@@ -143,29 +198,40 @@
         }
         set enabled(value) {
             this._enabled = value;
+            
             this.hoverBox.style.visibility = this._enabled ? "visible" : "hidden";
             this.hoverBoxInfo.style.visibility = this._enabled ? "visible" : "hidden";
+            this.container.style.visibility = this._enabled ? "visible" : "hidden";
+            if (this.iframe) {
+              this.iframe.style.visibility = this._enabled ? "visible" : "hidden";
+            }
             this._triggered = false;
+            // console.log("set enabled:", this._enabled);
             if (!this._enabled) {
               this.hoverBox.style.width = 0;
               this.hoverBox.style.height = 0;
               this.hoverBoxInfo.innerText = '';
               if (this._triggerListener) {
-                document.removeEventListener(this.action.trigger, this._triggerListener);
+                this.container.removeEventListener(this.action.trigger, this._triggerListener);
               }
-              document.removeEventListener("mousemove", this._detectMouseMove);
+              this.container.removeEventListener("mousemove", this._detectMouseMove);
+              document.removeEventListener("scroll", this._onScroll);
+              // console.log("remove listeners");
             } else {
+              window.focus(); // ensure window is focused so it can listen to key events
               if (this.action?.trigger && this._triggerListener) {
-                document.addEventListener(this.action.trigger, this._triggerListener);
+                this.container.addEventListener(this.action.trigger, this._triggerListener);
               }
-              document.addEventListener("mousemove", this._detectMouseMove);
+              this.container.addEventListener("mousemove", this._detectMouseMove);
+              document.addEventListener("scroll", this._onScroll);
+              // console.log("add listeners");
             }
         }
         get container() {
             return this._container;
         }
         set container(value) {
-            if (value instanceof HTMLElement) {
+            if (value.appendChild) {
                 this._container = value;
                 this.container.appendChild(this.hoverBox);
                 this.container.appendChild(this.hoverBoxInfo);
@@ -229,7 +295,7 @@
                 if (typeof value.trigger === "string" &&
                     typeof value.callback === "function") {
                     if (this._triggerListener) {
-                        document.removeEventListener(this.action.trigger, this._triggerListener);
+                        this.container.removeEventListener(this.action.trigger, this._triggerListener);
                         this._triggered = false;
                         this._actionEvent = null;
                     }
@@ -243,7 +309,7 @@
                           this._redetectMouseMove(); // call it again as the action may have altered the page
                         }
                     }
-                    document.addEventListener(this.action.trigger, this._triggerListener);
+                    this.container.addEventListener(this.action.trigger, this._triggerListener);
                 } else if (value.trigger !== undefined || value.callback !== undefined){ // allow empty action object
                     throw new Error("action must include two keys: trigger (String) and callback (function)!");
                 }
@@ -253,11 +319,15 @@
         }
         close() {
             if (this._triggerListener) {
-              document.removeEventListener(this.action.trigger, this._triggerListener);
+              this.container.removeEventListener(this.action.trigger, this._triggerListener);
             }
-            document.removeEventListener("mousemove", this._detectMouseMove);
+            this.container.removeEventListener("mousemove", this._detectMouseMove);
+            document.removeEventListener("scroll", this._onScroll);
             this.hoverBox.remove();
             this.hoverBoxInfo.remove();
+            if (this.iframe) {
+              this.iframe.remove();
+            }
         }        
         _redetectMouseMove() {
             if (this._detectMouseMove && this._previousEvent) {

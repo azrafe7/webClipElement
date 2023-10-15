@@ -27,7 +27,7 @@
   } */
 
   let options = {
-    // container: document.body,
+    container: null,
     enabled: false,
     selectors: "*",
     background: HIGHLIGHT_BG_COLOR,
@@ -35,7 +35,7 @@
     outlineWidth: 1,
     outlineColor: OUTLINE_COLOR,
     transition: "",
-    ignoreElements: [document.body],
+    ignoreElements: [],
     action: {},
     hoverBoxInfoId: 'webclip_picker_info',
   }
@@ -52,6 +52,7 @@
       if (event.button == 0) { // only proceed if left mouse button was pressed
         debug.log("[WebClipElement:CTX] target:", target);
         debug.log("[WebClipElement:CTX] info:", elementPicker.hoverInfo);
+        window.focus();
         elementPicker.hoverInfo.element = null; // not serializable
         const hoverInfoClone = structuredClone(elementPicker.hoverInfo);
         setTimeout(() => { // to ensure picker overlay is removed
@@ -149,7 +150,7 @@
       elementPicker.enabled = false;
       debug.log("[WebClipElement:CTX] user aborted");
     }
-  });
+  }, true);
 
   // change picker cursor when holding SHIFT
   function updateCursor(eventInfo) {
@@ -162,7 +163,7 @@
       }
     }
   }
-  window.addEventListener('keyup', (e) => updateCursor({keyUp: true, event: e}));
-  window.addEventListener('keydown', (e) => updateCursor({keyUp: false, event: e}));
+  window.addEventListener('keyup', (e) => updateCursor({keyUp: true, event: e}), true);
+  window.addEventListener('keydown', (e) => updateCursor({keyUp: false, event: e}), true);
 
 })();
