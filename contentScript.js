@@ -28,6 +28,7 @@
 
   let options = {
     container: null,
+    iFrameId: 'WebClip Element Picker Frame',
     enabled: false,
     selectors: "*",
     background: HIGHLIGHT_BG_COLOR,
@@ -42,6 +43,7 @@
 
   // create "disabled" elementPicker on page load
   let elementPicker = new ElementPicker(options);
+
   // elementPicker.hoverBox.style.cursor = CURSORS[0];
   elementPicker.action = {
     trigger: "mouseup",
@@ -107,7 +109,8 @@
       
       let image = new Image();
       image.onload = () => {
-        let visibleRect = getVisibleRect(hoverInfo.clientRect);
+        let rect = {x: hoverInfo.left, y: hoverInfo.top, width: hoverInfo.width, height: hoverInfo.height};
+        let visibleRect = getVisibleRect(rect); //getVisibleRect(hoverInfo.clientRect);
         debug.log("[WebClipElement:CTX] cropping...", visibleRect);
         let canvas = document.createElement('canvas');
         let ctx = canvas.getContext('2d');

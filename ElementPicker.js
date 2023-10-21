@@ -8,6 +8,8 @@
     }
 
     class ElementPicker {
+        VERSION = "0.2.3";
+        
         constructor(options) {
             // MUST create hover box first before applying options
             this.hoverBox = document.createElement("div");
@@ -26,8 +28,6 @@
               height: 0,
             }
             this.hoverBoxInfo.innerText = "";
-            // document.styleSheets[0].insertRule('#EP_hoverBoxInfo:empty { display: none;}', 0); // hide when empty
-            // ↑ done in CSS
             this.hoverBoxInfo.style = 
               `background-color: rgba(0,0,0,.5);
               border-radius: 0 0 0 0;
@@ -50,6 +50,7 @@
     
             const defaultOptions = {
                 container: null, // if falsey an iframe will be used
+                iFrameId: null, // only used if container is falsey to name the built iframe
                 enabled: true,
                 selectors: "*", // default to pick all elements
                 background: "rgba(153, 235, 255, 0.5)", // transparent light blue
@@ -67,11 +68,11 @@
             };
 
             if (!mergedOptions.container) {
-              let zapperIFrame = document.createElement('iframe');
-              zapperIFrame.id = 'zapper_iframe';
-              document.documentElement.append(zapperIFrame);
+              let pickerIFrame = document.createElement('iframe');
+              pickerIFrame.id = mergedOptions.iFrameId ?? 'picker_iframe';
+              document.documentElement.append(pickerIFrame);
 
-              const zapperIFrameCSS = `
+              const pickerIFrameCSS = `
                 backgroundColor: transparent;
                 left: 0px;
                 top: 0px;
@@ -84,11 +85,11 @@
                 color-scheme: none;
               `;
               
-              zapperIFrame.style = zapperIFrameCSS;
-              zapperIFrame.contentDocument.body.style = zapperIFrameCSS;
-              this.iframe = zapperIFrame;
-              mergedOptions.container = zapperIFrame.contentDocument.body;
-              mergedOptions.ignoreElements.push(zapperIFrame);
+              pickerIFrame.style = pickerIFrameCSS;
+              pickerIFrame.contentDocument.body.style = pickerIFrameCSS;
+              this.iframe = pickerIFrame;
+              mergedOptions.container = pickerIFrame.contentDocument.body;
+              mergedOptions.ignoreElements.push(pickerIFrame);
             }
 
             Object.keys(mergedOptions).forEach((key) => {
@@ -117,6 +118,7 @@
                     if (target === this.hoverBox || target === this.container) {
                         // the truely hovered element behind the added hover box
                         const hoveredElements = document.elementsFromPoint(e.clientX, e.clientY);
+                        // console.log(hoveredElements);
                         let hoveredElement = hoveredElements[0];
                         for (hoveredElement of hoveredElements) {
                           if ((this.iframe && this.iframe.contains(hoveredElement)) || this.container.contains(hoveredElement)) {
@@ -147,8 +149,10 @@
                     this.hoverBox.style.outline = this.outlineWidth + "px solid " + this.outlineColor;
                     
                     // need scrollX and scrollY to account for scrolling
-                    this.hoverBox.style.top = targetOffset.top + (this.iframe ? 0 : window.scrollY) - this.borderWidth + "px";
-                    this.hoverBox.style.left = targetOffset.left + (this.iframe ? 0 : window.scrollX) - this.borderWidth + "px";
+                    const top = (target.tagName === 'HTML' ? 0 : targetOffset.top) + (this.iframe ? 0 : window.scrollY);
+                    const left = (target.tagName === 'HTML' ? 0 : targetOffset.left) + (this.iframe ? 0 : window.scrollX);
+                    this.hoverBox.style.top = top - this.borderWidth + "px";
+                    this.hoverBox.style.left = left - this.borderWidth + "px";
 
                     // const infoText = `${targetText} ${targetWidth} × ${targetHeight}`;
                     const attrs = Array.from(target.attributes, ({name, value}) => (name + '=' + value));
@@ -165,12 +169,14 @@
                       targetOffsetLeft: targetOffset.left,
                       scrollX: window.scrollX,
                       scrollY: window.scrollY,
-                      top: targetOffset.top + window.scrollY,
-                      left: targetOffset.left + window.scrollX,
+                      top: top, // targetOffset.top + window.scrollY,
+                      left: left, // targetOffset.left + window.scrollX,
                       clientRect: targetOffset,
                       text: infoText,
                     }
 
+                    // console.log(this.hoverInfo);
+                    
                     if (this._triggered && this.action.callback) {
                         // console.log("TRIGGERED");
                         this.action.callback(this._actionEvent, target);
@@ -204,6 +210,7 @@
             this.container.style.visibility = this._enabled ? "visible" : "hidden";
             if (this.iframe) {
               this.iframe.style.visibility = this._enabled ? "visible" : "hidden";
+              this.iframe.style.display = this._enabled ? "block" : "none";
             }
             this._triggered = false;
             // console.log("set enabled:", this._enabled);
