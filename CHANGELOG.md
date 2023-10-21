@@ -1,5 +1,10 @@
  # CHANGELOG
 
+ ### v0.2.4 (22 Oct 2023)
+ - update picker to v0.2.4
+ - adjust clipping rect
+ - support more pages
+ 
  ### v0.2.0 (15 Oct 2023)
  - update picker to latest
  - inject in top frame only
