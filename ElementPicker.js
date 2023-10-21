@@ -8,7 +8,7 @@
     }
 
     class ElementPicker {
-        VERSION = "0.2.3";
+        VERSION = "0.2.4";
         
         constructor(options) {
             // MUST create hover box first before applying options
@@ -82,6 +82,7 @@
                 overflow: hidden;
                 z-index: 2147483647 !important;
                 margin: 0px;
+                border: 0px;
                 color-scheme: none;
               `;
               
