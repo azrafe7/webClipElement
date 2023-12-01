@@ -14,10 +14,14 @@ Hold SHIFT to clip multiple elements on the page, or press ESC to quit clipping 
 You can also take a screenshot of the visible page:
 right-click on the extension button and select 'Take page screenshot...'.
 
+Now you can also expand/reduce the highlighted element by pressing Q or A respectively (be sure to then press SPACE to take a screenshot of the highlighted element ;).
+
 HOW DOES IT WORK?
 Under-the-hood it takes a screenshot of the current (visible) page, and then crops it using position and size of the highlighted element.
 Should also work when the browser page is zoomed in/out.
 
 And all happens inside your browser, nothing is sent online (check the code at https://github.com/azrafe7/webClipElement). ;D
+
+Please report issues/feature requests via mail or on the issue tracker at https://github.com/azrafe7/webClipElement/issues
 
 CHANGELOG: https://github.com/azrafe7/webClipElement/blob/main/CHANGELOG.md
