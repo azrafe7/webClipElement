@@ -20,6 +20,8 @@
 
   const CURSORS = ["crosshair", "copy"];
 
+  let lastTriggeredElement = null;
+
   /* if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     // dark mode
     HIGHLIGHT_BG_COLOR = HIGHLIGHT_DARK;
@@ -55,6 +57,7 @@
       if (event.triggered) {
         debug.log("[WebClipElement:CTX] target:", target);
         debug.log("[WebClipElement:CTX] info:", elementPicker.hoverInfo);
+        lastTriggeredElement = elementPicker.hoverInfo.element;
         elementPicker.hoverInfo.element = null; // not serializable
         const hoverInfoClone = structuredClone(elementPicker.hoverInfo);
         setTimeout(() => { // to ensure picker overlay is removed
@@ -105,6 +108,7 @@
       
       if (continuePicking) {
         elementPicker.enabled = true;
+        elementPicker.highlight(lastTriggeredElement);
       }
       
       let image = new Image();
