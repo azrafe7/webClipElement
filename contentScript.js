@@ -49,12 +49,12 @@
     trigger: "mouseup",
     
     callback: ((event, target) => {
-      // debug.log("[WebClipElement:CTX] event:", event);
+      debug.log("[WebClipElement:CTX] event:", event);
       let continuePicking = event.shiftKey;
-      if (event.button == 0) { // only proceed if left mouse button was pressed
+      event.triggered = event.triggered ?? event.button == 0; // only proceed if left mouse button was pressed or "event.triggered" was set
+      if (event.triggered) {
         debug.log("[WebClipElement:CTX] target:", target);
         debug.log("[WebClipElement:CTX] info:", elementPicker.hoverInfo);
-        window.focus();
         elementPicker.hoverInfo.element = null; // not serializable
         const hoverInfoClone = structuredClone(elementPicker.hoverInfo);
         setTimeout(() => { // to ensure picker overlay is removed
@@ -147,11 +147,63 @@
     }
   });
 
+  const keyEventContainer = window; // elementPicker.iframe ? elementPicker.iframe : window;
+
   // close picker when pressing ESC
-  window.addEventListener('keyup', function(e) {
-    if (e.keyCode == 27 && elementPicker.enabled) {
+  keyEventContainer.addEventListener('keyup', function(e) {
+    if (e.code === 'Escape' && elementPicker.enabled) {
       elementPicker.enabled = false;
       debug.log("[WebClipElement:CTX] user aborted");
+    }
+  }, true);
+
+  keyEventContainer.addEventListener('keydown', function(e) {
+    let target = null;
+    let newTarget = null;
+    if (e.code === 'Space' && elementPicker.enabled) {
+      target = elementPicker.hoverInfo.element;
+      debug.log("[WebClipElement:CTX] space-clicked target:", target);
+      e.preventDefault();
+      e.triggered = true; // checked inside action callback
+      elementPicker.trigger(e);
+    } else if (elementPicker.enabled && (e.code === 'KeyQ' || e.code === 'KeyA')) {
+      target = elementPicker.hoverInfo.element;
+
+      let innermostTargetAtPoint = null; // first non-picker-iframe element
+      for (let el of document.elementsFromPoint(elementPicker._lastClientX, elementPicker._lastClientY)) {
+        if (el != elementPicker.iframe) {
+          innermostTargetAtPoint = el;
+          break;
+        }
+      }
+      // build ancestors array
+      let ancestorsAndSelf = [];
+      for (let el=innermostTargetAtPoint; el != null; el = el.parentElement) {
+        ancestorsAndSelf.push(el);
+      }
+      
+      const ancestorsAndSelfLength = ancestorsAndSelf.length;
+      const targetIdx = ancestorsAndSelf.indexOf(target);
+      const targetHasNext = targetIdx <= (ancestorsAndSelfLength - 2);
+      const targetHasPrev = targetIdx > 0;
+      if (e.code === 'KeyQ' && targetHasNext) { // drill up
+        newTarget = ancestorsAndSelf[targetIdx + 1];
+        if (newTarget.contains(elementPicker.iframe)) {
+          newTarget = target;
+        }
+        debug.log("[WebClipElement:CTX] Q-pressed new ↑ target:", newTarget);
+      } else if (e.code === 'KeyA' && targetHasPrev) { // drill down
+        newTarget = ancestorsAndSelf[targetIdx - 1];
+        if (newTarget.contains(elementPicker.iframe)) {
+          newTarget = target;
+        }
+        debug.log("[WebClipElement:CTX] A-pressed new ↓ target:", newTarget);
+      }
+      debug.log(`${targetIdx}/${ancestorsAndSelfLength}`, 'newTarget', targetHasPrev, targetHasNext, newTarget);
+      if (newTarget && newTarget != target) {
+        elementPicker.highlight(newTarget);
+      }
+      e.preventDefault();
     }
   }, true);
 
@@ -161,12 +213,13 @@
     if (elementPicker.enabled) {
       let cursorIdx = +event.shiftKey;
       if (elementPicker.hoverBox.style.cursor != CURSORS[cursorIdx]) {
-        // debug.log('[WebClipElement:CTX] change cursor to ' + CURSORS[cursorIdx]);
+        debug.log('[WebClipElement:CTX] change cursor to ' + CURSORS[cursorIdx]);
         elementPicker.hoverBox.style.cursor = CURSORS[cursorIdx];
       }
     }
   }
-  window.addEventListener('keyup', (e) => updateCursor({keyUp: true, event: e}), true);
-  window.addEventListener('keydown', (e) => updateCursor({keyUp: false, event: e}), true);
+  
+  keyEventContainer.addEventListener('keyup', (e) => updateCursor({keyUp: true, event: e}), true);
+  keyEventContainer.addEventListener('keydown', (e) => updateCursor({keyUp: false, event: e}), true);
 
 })();
