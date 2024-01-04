@@ -43,37 +43,54 @@
     hoverBoxInfoId: 'webclip_picker_info',
   }
 
-  // create "disabled" elementPicker on page load
-  let elementPicker = new ElementPicker(options);
+  let elementPicker = null;
 
-  // elementPicker.hoverBox.style.cursor = CURSORS[0];
-  elementPicker.action = {
-    trigger: "mouseup",
-    
-    callback: ((event, target) => {
-      debug.log("[WebClipElement:CTX] event:", event);
-      let continuePicking = event.shiftKey;
-      event.triggered = event.triggered ?? event.button == 0; // only proceed if left mouse button was pressed or "event.triggered" was set
-      if (event.triggered) {
-        debug.log("[WebClipElement:CTX] target:", target);
-        debug.log("[WebClipElement:CTX] info:", elementPicker.hoverInfo);
-        lastTriggeredElement = elementPicker.hoverInfo.element;
-        elementPicker.hoverInfo.element = null; // not serializable
-        const hoverInfoClone = structuredClone(elementPicker.hoverInfo);
-        setTimeout(() => { // to ensure picker overlay is removed
-          chrome.runtime.sendMessage(
-            {
-              event: "takeScreenshot",
-              data: {hoverInfo: hoverInfoClone, continuePicking: continuePicking},
-            },
-          );
-        }, 50);
-      }
-      
-      elementPicker.enabled = false; // always disable picker highlight (so that it's not saved in the screenshot)
-    })
+  // close picker and set var to null
+  function closePicker() {
+    debug.log("[WebClipElement:CTX] closePicker()");
+    if (elementPicker) {
+      elementPicker.enabled = false;
+      elementPicker.close();
+      elementPicker = null;
+    }
   }
+  
+  function createPicker() {
+    debug.log("[WebClipElement:CTX] createPicker()");
 
+    if (elementPicker) return;
+    
+    elementPicker = new ElementPicker(options);
+
+    // elementPicker.hoverBox.style.cursor = CURSORS[0];
+    elementPicker.action = {
+      trigger: "mouseup",
+      
+      callback: ((event, target) => {
+        debug.log("[WebClipElement:CTX] event:", event);
+        let continuePicking = event.shiftKey;
+        event.triggered = event.triggered ?? event.button == 0; // only proceed if left mouse button was pressed or "event.triggered" was set
+        if (event.triggered) {
+          debug.log("[WebClipElement:CTX] target:", target);
+          debug.log("[WebClipElement:CTX] info:", elementPicker.hoverInfo);
+          lastTriggeredElement = elementPicker.hoverInfo.element;
+          elementPicker.hoverInfo.element = null; // not serializable
+          const hoverInfoClone = structuredClone(elementPicker.hoverInfo);
+          setTimeout(() => { // to ensure picker overlay is removed
+            chrome.runtime.sendMessage(
+              {
+                event: "takeScreenshot",
+                data: {hoverInfo: hoverInfoClone, continuePicking: continuePicking},
+              },
+            );
+          }, 50);
+        }
+        
+        elementPicker.enabled = false; // always disable picker highlight (so that it's not saved in the screenshot)
+      })
+    }
+  }
+  
   function getVisibleRect(rect) {
     let visibleRect = DOMRect.fromRect(rect);
 
@@ -98,15 +115,25 @@
     debug.log("[WebClipElement:CTX]", msg);
     const { event, data } = msg;
 
-    if (event === "enablePicker") {
-      elementPicker.enabled = data?.enable ?? true;
-      elementPicker.hoverBox.style.cursor = CURSORS[0];
+    if (event === "togglePicker") {
+      let isEnabled = elementPicker?.enabled ?? false;
+      let mustEnable = data?.enable ?? !isEnabled;
+      if (isEnabled != mustEnable) {
+        if (mustEnable) {
+          createPicker();
+          elementPicker.enabled = true;
+          elementPicker.hoverBox.style.cursor = CURSORS[0];
+        } else {
+          closePicker();
+        }
+      }      
     } else if (event === "takenScreenshot") {
       let dataURL = data.dataURL;
       let hoverInfo = data.hoverInfo;
       let continuePicking = data?.continuePicking;
       
       if (continuePicking) {
+        createPicker();
         elementPicker.enabled = true;
         elementPicker.highlight(lastTriggeredElement);
       }
@@ -155,8 +182,8 @@
 
   // close picker when pressing ESC
   keyEventContainer.addEventListener('keyup', function(e) {
-    if (e.code === 'Escape' && elementPicker.enabled) {
-      elementPicker.enabled = false;
+    if (e.code === 'Escape' && elementPicker?.enabled) {
+      closePicker();
       debug.log("[WebClipElement:CTX] user aborted");
     }
   }, true);
@@ -164,13 +191,13 @@
   keyEventContainer.addEventListener('keydown', function(e) {
     let target = null;
     let newTarget = null;
-    if (e.code === 'Space' && elementPicker.enabled) {
+    if (e.code === 'Space' && elementPicker?.enabled) {
       target = elementPicker.hoverInfo.element;
       debug.log("[WebClipElement:CTX] space-clicked target:", target);
       e.preventDefault();
       e.triggered = true; // checked inside action callback
       elementPicker.trigger(e);
-    } else if (elementPicker.enabled && (e.code === 'KeyQ' || e.code === 'KeyA')) {
+    } else if (elementPicker?.enabled && (e.code === 'KeyQ' || e.code === 'KeyA')) {
       target = elementPicker.hoverInfo.element;
 
       let innermostTargetAtPoint = null; // first non-picker-iframe element
@@ -214,7 +241,7 @@
   // change picker cursor when holding SHIFT
   function updateCursor(eventInfo) {
     let {keyUp, event} = eventInfo;
-    if (elementPicker.enabled) {
+    if (elementPicker?.enabled) {
       let cursorIdx = +event.shiftKey;
       if (elementPicker.hoverBox.style.cursor != CURSORS[cursorIdx]) {
         debug.log('[WebClipElement:CTX] change cursor to ' + CURSORS[cursorIdx]);
