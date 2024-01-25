@@ -201,16 +201,43 @@
       target = elementPicker.hoverInfo.element;
 
       let innermostTargetAtPoint = null; // first non-picker-iframe element
-      for (let el of document.elementsFromPoint(elementPicker._lastClientX, elementPicker._lastClientY)) {
+      let elementsAtPoint = document.elementsFromPoint(elementPicker._lastClientX, elementPicker._lastClientY);
+      for (let el of elementsAtPoint) {
         if (el != elementPicker.iframe) {
           innermostTargetAtPoint = el;
           break;
         }
       }
+      const pickerIFrameIdx = elementsAtPoint.indexOf(elementPicker.iframe);
+      if (pickerIFrameIdx >= 0) elementsAtPoint.splice(pickerIFrameIdx, 1); // remove iframe from array
+      
       // build ancestors array
       let ancestorsAndSelf = [];
       for (let el=innermostTargetAtPoint; el != null; el = el.parentElement) {
         ancestorsAndSelf.push(el);
+      }
+      
+      // merge ancestors with elementsAtPoint
+      let mergeAtIndices = [];
+      let ancestorsSet = new Set(ancestorsAndSelf);
+      for (let el of elementsAtPoint) {
+        if (ancestorsSet.has(el)) {
+          continue;
+        }
+        for (let [idx, ancestor] of Object.entries(ancestorsAndSelf)) {
+          if (ancestor.contains(el)) {
+            mergeAtIndices.push({ element:el, index:idx });
+            break;
+          }
+        }
+      }
+      for (let mergeInfo of mergeAtIndices.toReversed()) {
+        const {element, index} = mergeInfo;
+        if (index == -1) {
+          ancestorsAndSelf.push(element);
+        } else {
+          ancestorsAndSelf.splice(index, 0, element);
+        }
       }
       
       const ancestorsAndSelfLength = ancestorsAndSelf.length;
