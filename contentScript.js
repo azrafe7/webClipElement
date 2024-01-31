@@ -199,6 +199,7 @@
     }
     let target = null;
     let newTarget = null;
+    let newTargetIdx = null;
     if (e.code === 'Space' && elementPicker?.enabled) {
       target = elementPicker.hoverInfo.element;
       debug.log("[WebClipElement:CTX] space-clicked target:", target);
@@ -282,22 +283,25 @@
       
       const ancestorsAndSelfLength = ancestorsAndSelf.length;
       const targetIdx = ancestorsAndSelf.indexOf(target);
+      newTargetIdx = targetIdx;
       const targetHasNext = targetIdx <= (ancestorsAndSelfLength - 2);
       const targetHasPrev = targetIdx > 0;
       if (e.code === 'KeyQ' && targetHasNext) { // drill up
-        newTarget = ancestorsAndSelf[targetIdx + 1];
-        if (newTarget.contains(elementPicker.iframe)) {
+        newTargetIdx = targetIdx + 1;
+        newTarget = ancestorsAndSelf[newTargetIdx];
+        /*if (newTarget.contains(elementPicker.iframe)) {
           newTarget = target;
-        }
+        }*/
         debug.log("[WebClipElement:CTX] Q-pressed new ↑ target:", newTarget);
       } else if (e.code === 'KeyA' && targetHasPrev) { // drill down
-        newTarget = ancestorsAndSelf[targetIdx - 1];
-        if (newTarget.contains(elementPicker.iframe)) {
+        newTargetIdx = targetIdx - 1;
+        newTarget = ancestorsAndSelf[newTargetIdx];
+        /*if (newTarget.contains(elementPicker.iframe)) {
           newTarget = target;
-        }
+        }*/
         debug.log("[WebClipElement:CTX] A-pressed new ↓ target:", newTarget);
       }
-      debug.log(`${targetIdx}/${ancestorsAndSelfLength}`, 'newTarget', targetHasPrev, targetHasNext, newTarget);
+      debug.log(`${newTargetIdx}/${ancestorsAndSelfLength - 1}`, 'newTarget', targetHasPrev, targetHasNext, newTarget, ancestorsAndSelf);
       if (newTarget && newTarget != target) {
         elementPicker.highlight(newTarget);
       }
