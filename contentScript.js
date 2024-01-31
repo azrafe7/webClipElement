@@ -207,7 +207,26 @@
     } else if (elementPicker?.enabled && (e.code === 'KeyQ' || e.code === 'KeyA')) {
       target = elementPicker.hoverInfo.element;
 
+      // temporarily set pointer-events:all for all videos
+      // (as pointer-events:none will prevent elements to be returned by elementsFromPoint())
+      let videos = Array.from(document.querySelectorAll('video'));
+      let fixedVideosMap = new Map(); // [element: { prop, value, priority }]
+      const POINTER_EVENTS = 'pointer-events';
+      for (let video of videos) {
+        let computedStyle = getComputedStyle(video);
+        // console.log('video:', video, 'computedStyle', POINTER_EVENTS + ':', computedStyle[POINTER_EVENTS]);
+        if (computedStyle[POINTER_EVENTS] === 'none') {
+          let value = video.style.getPropertyValue(POINTER_EVENTS);
+          let priority = video.style.getPropertyPriority(POINTER_EVENTS);
+          fixedVideosMap.set(video, { prop:POINTER_EVENTS, value:value, priority:priority });
+          video.style.setProperty(POINTER_EVENTS, 'all', 'important');
+        }
+      }
+      debug.log(`fixedVideosMap (${fixedVideosMap}):`, fixedVideosMap)
+      
       let innermostTargetAtPoint = null; // first non-picker-iframe element
+      
+      // get elements at point
       let elementsAtPoint = document.elementsFromPoint(elementPicker._lastClientX, elementPicker._lastClientY);
       for (let el of elementsAtPoint) {
         if (el != elementPicker.iframe) {
@@ -215,29 +234,43 @@
           break;
         }
       }
+      // remove iframe from array (if present)
       const pickerIFrameIdx = elementsAtPoint.indexOf(elementPicker.iframe);
-      if (pickerIFrameIdx >= 0) elementsAtPoint.splice(pickerIFrameIdx, 1); // remove iframe from array
+      if (pickerIFrameIdx >= 0) elementsAtPoint.splice(pickerIFrameIdx, 1);
       
+      // restore saved pointer-events prop of fixedVideosMap
+      for (let [video, style] of fixedVideosMap.entries()) {
+        video.style.setProperty(style.prop, style.value, style.priority);
+      }
+      fixedVideosMap.clear();
+
       // build ancestors array
       let ancestorsAndSelf = [];
       for (let el=innermostTargetAtPoint; el != null; el = el.parentElement) {
         ancestorsAndSelf.push(el);
       }
       
-      // merge ancestors with elementsAtPoint
+      debug.log('ancestors:', ancestorsAndSelf);
+      debug.log('elementsAtPoint:', [elementPicker._lastClientX, elementPicker._lastClientY], elementsAtPoint);
+      
+      let elementsToMerge = elementsAtPoint;
+      
+      // merge ancestors with elementsToMerge
       let mergeAtIndices = [];
       let ancestorsSet = new Set(ancestorsAndSelf);
-      for (let el of elementsAtPoint) {
+      for (let el of elementsToMerge) {
         if (ancestorsSet.has(el)) {
           continue;
         }
         for (let [idx, ancestor] of Object.entries(ancestorsAndSelf)) {
           if (ancestor.contains(el)) {
             mergeAtIndices.push({ element:el, index:idx });
+            ancestorsSet.add(el);
             break;
           }
         }
       }
+      debug.log('mergeAtIndices:', mergeAtIndices);
       for (let mergeInfo of mergeAtIndices.toReversed()) {
         const {element, index} = mergeInfo;
         if (index == -1) {
